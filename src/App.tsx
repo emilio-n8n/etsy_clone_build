@@ -5,8 +5,10 @@ import { CommunityFeed } from './components/CommunityFeed';
 import { Marketplace } from './components/Marketplace';
 import { ProductForm } from './components/ProductForm';
 import { Profile } from './components/Profile';
+import { LandingPage } from './components/LandingPage';
 
 export function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('feed');
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -17,6 +19,10 @@ export function App() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (!isAuthenticated) {
+    return <LandingPage onEnter={() => setIsAuthenticated(true)} />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
