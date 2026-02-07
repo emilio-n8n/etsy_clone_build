@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { PlusIcon } from './ui/Icons';
+import { supabase } from '../lib/supabase';
 
 export const ProductForm: React.FC = () => {
     const [step, setStep] = useState(1);
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         price: '',
@@ -13,6 +15,29 @@ export const ProductForm: React.FC = () => {
 
     const nextStep = () => setStep(s => s + 1);
     const prevStep = () => setStep(s => s - 1);
+
+    const handlePublish = async () => {
+        setLoading(true);
+        try {
+            const user = await supabase.auth.getUser();
+            if (!user) throw new Error("Vous devez être connecté pour publier.");
+
+            const { data, error } = await supabase.from('products').insert({
+                title: formData.title,
+                price: parseFloat(formData.price),
+                category: formData.category,
+                image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800", // Placeholder for now
+                creator: user.user_metadata?.full_name || user.email?.split('@')[0],
+            });
+
+            if (error) throw error;
+            setStep(3); // Go to success step
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="max-w-2xl mx-auto py-6 px-4 pb-24 md:pb-6">
@@ -67,10 +92,12 @@ export const ProductForm: React.FC = () => {
                                         onChange={e => setFormData({ ...formData, category: e.target.value })}
                                     >
                                         <option value="">Sélectionner...</option>
-                                        <option value="ceramique">Céramique</option>
-                                        <option value="textile">Textile</option>
-                                        <option value="bijoux">Bijoux</option>
-                                        <option value="design">Design</option>
+                                        <option value="Céramique">Céramique</option>
+                                        <option value="Textile">Textile</option>
+                                        <option value="Bijoux">Bijoux</option>
+                                        <option value="Design">Design</option>
+                                        <option value="Déco">Déco</option>
+                                        <option value="Papeterie">Papeterie</option>
                                     </select>
                                 </div>
                             </div>
@@ -111,7 +138,7 @@ export const ProductForm: React.FC = () => {
                             </div>
                             <h2 className="text-xl font-bold text-slate-900">Tout est prêt !</h2>
                             <p className="text-sm text-slate-500">
-                                Votre création sera mise en ligne instantanément. Nous nous occupons de la valorisation et du ciblage.
+                                Votre création a été mise en ligne avec succès.
                             </p>
 
                             <div className="bg-slate-50 rounded-2xl p-4 text-left space-y-2">
@@ -123,7 +150,7 @@ export const ProductForm: React.FC = () => {
                     )}
 
                     <div className="mt-10 flex gap-4">
-                        {step > 1 && step < 3 && (
+                        {step === 2 && (
                             <button
                                 onClick={prevStep}
                                 className="flex-1 py-4 rounded-full border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
@@ -131,20 +158,28 @@ export const ProductForm: React.FC = () => {
                                 Retour
                             </button>
                         )}
-                        {step < 3 ? (
+                        {step === 1 ? (
                             <button
                                 onClick={nextStep}
-                                disabled={step === 1 && !formData.title}
+                                disabled={!formData.title || !formData.category}
                                 className="flex-1 py-4 rounded-full bg-slate-900 text-sm font-semibold text-white shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
                             >
                                 Continuer
+                            </button>
+                        ) : step === 2 ? (
+                            <button
+                                onClick={handlePublish}
+                                disabled={loading || !formData.price}
+                                className="flex-1 py-4 rounded-full bg-slate-900 text-sm font-semibold text-white shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50"
+                            >
+                                {loading ? "Publication..." : "Publier maintenant"}
                             </button>
                         ) : (
                             <button
                                 className="flex-1 py-4 rounded-full bg-slate-900 text-sm font-semibold text-white shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95"
                                 onClick={() => window.location.reload()}
                             >
-                                Publier maintenant
+                                Recommencer
                             </button>
                         )}
                     </div>

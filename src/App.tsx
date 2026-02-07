@@ -8,16 +8,27 @@ import { Profile } from './components/Profile';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/auth/LoginPage';
 import { SignupPage } from './components/auth/SignupPage';
+import { supabase } from './lib/supabase';
 
 type View = 'landing' | 'login' | 'signup' | 'dashboard';
 
 export function App() {
   const [view, setView] = useState<View>('landing');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('feed');
   const [isScrolled, setIsScrolled] = useState(false);
-
   useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const user = await supabase.auth.getUser();
+        if (user) {
+          setView('dashboard');
+        }
+      } catch (e) {
+        // Not logged in
+      }
+    };
+    checkUser();
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
@@ -25,19 +36,17 @@ export function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Sync isAuthenticated with view
-  useEffect(() => {
-    if (isAuthenticated) {
-      setView('dashboard');
-    }
-  }, [isAuthenticated]);
-
   const handleLogin = () => {
-    setIsAuthenticated(true);
+    setView('dashboard');
   };
 
   const handleSignup = () => {
-    setIsAuthenticated(true);
+    setView('dashboard');
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setView('landing');
   };
 
   if (view === 'landing') {
@@ -80,7 +89,7 @@ export function App() {
           </div>
         );
       case 'profile':
-        return <Profile />;
+        return <Profile onLogout={handleLogout} />;
       default:
         return <CommunityFeed />;
     }

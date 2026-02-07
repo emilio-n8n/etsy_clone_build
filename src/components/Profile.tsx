@@ -1,22 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 
-export const Profile: React.FC = () => {
+interface ProfileProps {
+    onLogout: () => void;
+}
+
+export const Profile: React.FC<ProfileProps> = ({ onLogout }) => {
     const [activeTab, setActiveTab] = useState('creations');
+    const [user, setUser] = useState<any>(null);
+    const [creations, setCreations] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const user = {
-        name: "Emilio Moreau",
-        username: "emilio_m",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emilio",
-        bio: "Artisan passionné par le bois et les formes organiques. Je crée des objets durables pour votre quotidien. 🌲✨",
-        followers: 1240,
-        following: 450,
-    };
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const userData = await supabase.auth.getUser();
+                if (userData) {
+                    setUser({
+                        name: userData.user_metadata?.full_name || userData.email?.split('@')[0],
+                        username: userData.user_metadata?.username || userData.email?.split('@')[0],
+                        avatar: userData.user_metadata?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.email}`,
+                        bio: userData.user_metadata?.bio || "Nouvel artisan sur NOVA. Passionné par la création.",
+                        followers: 0,
+                        following: 0,
+                    });
 
-    const creations = [
-        { id: '1', image: 'https://images.unsplash.com/photo-1534073828943-f801091bb18c?auto=format&fit=crop&q=80&w=800' },
-        { id: '2', image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800' },
-        { id: '3', image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800' },
-    ];
+                    // Fetch user's creations
+                    const products = await supabase.from('products').select('*');
+                    // Filter locally if we don't have user_id in schema yet, 
+                    // or just show all for now if it's the personal profile
+                    setCreations(products || []);
+                }
+            } catch (err) {
+                console.error("Error fetching profile:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUserData();
+    }, []);
+
+    if (loading) {
+        return <div className="max-w-4xl mx-auto py-20 text-center text-slate-400">Chargement du profil...</div>;
+    }
+
+    if (!user) {
+        return <div className="max-w-4xl mx-auto py-20 text-center text-slate-400">Veuillez vous connecter.</div>;
+    }
 
     return (
         <div className="max-w-4xl mx-auto py-6 px-4 pb-24 md:pb-6">
@@ -29,9 +59,17 @@ export const Profile: React.FC = () => {
                             alt={user.name}
                             className="w-24 h-24 rounded-[32px] border-4 border-white bg-slate-50 object-cover shadow-md"
                         />
-                        <button className="rounded-full border border-slate-200 px-6 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-all active:scale-95 translate-y-8">
-                            Modifier le profil
-                        </button>
+                        <div className="flex gap-3 translate-y-8">
+                            <button className="rounded-full border border-slate-200 px-6 py-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-all active:scale-95">
+                                Modifier le profil
+                            </button>
+                            <button
+                                onClick={onLogout}
+                                className="rounded-full border border-red-100 px-6 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-all active:scale-95"
+                            >
+                                Déconnexion
+                            </button>
+                        </div>
                     </div>
 
                     <div className="mt-[-2rem]">
@@ -62,8 +100,8 @@ export const Profile: React.FC = () => {
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`flex-1 py-4 text-sm font-bold uppercase tracking-widest transition-all border-b-2 ${activeTab === tab
-                                ? 'border-slate-900 text-slate-900'
-                                : 'border-transparent text-slate-400'
+                            ? 'border-slate-900 text-slate-900'
+                            : 'border-transparent text-slate-400'
                             }`}
                     >
                         {tab}
@@ -72,7 +110,7 @@ export const Profile: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                {creations.map(c => (
+                {creations.length > 0 ? creations.map(c => (
                     <div key={c.id} className="aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-100 group cursor-pointer">
                         <img
                             src={c.image}
@@ -80,7 +118,9 @@ export const Profile: React.FC = () => {
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                     </div>
-                ))}
+                )) : (
+                    <div className="col-span-full py-20 text-center text-slate-400 italic">Aucune création pour le moment.</div>
+                )}
             </div>
         </div>
     );
