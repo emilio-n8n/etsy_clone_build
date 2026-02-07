@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { HeartIcon, SearchIcon } from './ui/Icons';
+import { ProductDetail } from './ProductDetail';
 
-interface ProductCardProps {
+interface ProductCardProps extends ProductCardData {
+    onClick: () => void;
+}
+
+interface ProductCardData {
     title: string;
     price: number;
     image: string;
@@ -10,8 +15,8 @@ interface ProductCardProps {
     category: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ title, price, image, creator, category }) => (
-    <div className="group cursor-pointer">
+const ProductCard: React.FC<ProductCardProps> = ({ title, price, image, creator, category, onClick }) => (
+    <div className="group cursor-pointer" onClick={onClick}>
         <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-slate-100 border border-slate-100 shadow-sm transition-all group-hover:shadow-md">
             <img
                 src={image}
@@ -40,6 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ title, price, image, creator,
 export const Marketplace: React.FC = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -80,12 +86,23 @@ export const Marketplace: React.FC = () => {
                     <div className="col-span-full py-20 text-center text-slate-400">Chargement des créations...</div>
                 ) : products.length > 0 ? (
                     products.map((product) => (
-                        <ProductCard key={product.id} {...product} />
+                        <ProductCard
+                            key={product.id}
+                            {...product}
+                            onClick={() => setSelectedProduct(product)}
+                        />
                     ))
                 ) : (
                     <div className="col-span-full py-20 text-center text-slate-400">Aucune création disponible pour le moment.</div>
                 )}
             </div>
+
+            {selectedProduct && (
+                <ProductDetail
+                    product={selectedProduct}
+                    onBack={() => setSelectedProduct(null)}
+                />
+            )}
         </div>
     );
 };

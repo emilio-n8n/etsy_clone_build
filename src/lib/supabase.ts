@@ -95,5 +95,41 @@ export const supabase = {
                 });
             }
         };
+    },
+
+    storage: {
+        from(bucket: string) {
+            return {
+                async upload(path: string, file: File) {
+                    const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path}`;
+                    const headers = {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${localStorage.getItem('supabase_token') || SUPABASE_ANON_KEY}`,
+                        // Content-Type is set automatically for Multipart/Form-Data if we use FormData
+                    };
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers,
+                        body: file, // Send file directly as binary
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Upload failed');
+                    }
+
+                    return response.json();
+                },
+
+                getPublicUrl(path: string) {
+                    return {
+                        data: {
+                            publicUrl: `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`
+                        }
+                    };
+                }
+            };
+        }
     }
 };

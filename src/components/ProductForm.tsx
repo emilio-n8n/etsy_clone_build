@@ -10,11 +10,20 @@ export const ProductForm: React.FC = () => {
         price: '',
         category: '',
         description: '',
-        images: [] as string[]
     });
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const nextStep = () => setStep(s => s + 1);
     const prevStep = () => setStep(s => s - 1);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
 
     const handlePublish = async () => {
         setLoading(true);
@@ -22,11 +31,20 @@ export const ProductForm: React.FC = () => {
             const user = await supabase.auth.getUser();
             if (!user) throw new Error("Vous devez être connecté pour publier.");
 
-            const { data, error } = await supabase.from('products').insert({
+            let imageUrl = "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800"; // Fallback
+
+            if (selectedFile) {
+                const fileName = `${Date.now()}-${selectedFile.name}`;
+                await supabase.storage.from('product-images').upload(fileName, selectedFile);
+                imageUrl = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
+            }
+
+            const { error } = await supabase.from('products').insert({
                 title: formData.title,
                 price: parseFloat(formData.price),
                 category: formData.category,
-                image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800", // Placeholder for now
+                description: formData.description,
+                image: imageUrl,
                 creator: user.user_metadata?.full_name || user.email?.split('@')[0],
             });
 
@@ -63,12 +81,24 @@ export const ProductForm: React.FC = () => {
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-700">Photos de votre œuvre</label>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <button className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-slate-400 hover:text-slate-600 transition-all">
-                                        <PlusIcon className="w-8 h-8" />
-                                        <span className="text-xs font-medium">Ajouter</span>
-                                    </button>
+                                    <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-slate-400 hover:text-slate-600 transition-all cursor-pointer overflow-hidden relative">
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                        />
+                                        {previewUrl ? (
+                                            <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
+                                        ) : (
+                                            <>
+                                                <PlusIcon className="w-8 h-8" />
+                                                <span className="text-xs font-medium">Ajouter</span>
+                                            </>
+                                        )}
+                                    </label>
                                     <div className="aspect-square rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300">
-                                        <span className="text-[10px] uppercase font-bold tracking-widest">Aperçu</span>
+                                        <span className="text-[10px] uppercase font-bold tracking-widest text-center px-2">L'image sera stockée sur NOVA</span>
                                     </div>
                                 </div>
                             </div>
