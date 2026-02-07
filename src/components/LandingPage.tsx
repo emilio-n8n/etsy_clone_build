@@ -1,10 +1,11 @@
 import React from "react";
 
 interface LandingPageProps {
-    onEnter: () => void;
+    onLogin: () => void;
+    onSignup: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onSignup }) => {
     return (
         <div className="min-h-screen bg-[#FDFCFB] selection:bg-slate-900 selection:text-white overflow-hidden">
             {/* Navigation */}
@@ -42,13 +43,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
                     </div>
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={onEnter}
+                            onClick={onLogin}
                             className="hidden sm:block text-sm font-bold text-slate-900 px-6 py-2.5 hover:text-slate-700 transition-all active:scale-95"
                         >
                             Se connecter
                         </button>
                         <button
-                            onClick={onEnter}
+                            onClick={onSignup}
                             className="bg-slate-900 text-white text-sm font-bold px-8 py-3 rounded-full shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all hover:-translate-y-0.5 active:scale-95"
                         >
                             S'inscrire
@@ -85,7 +86,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in delay-300">
                         <button
-                            onClick={onEnter}
+                            onClick={onSignup}
                             className="w-full sm:w-auto bg-slate-900 text-white px-10 py-5 rounded-3xl text-lg font-bold shadow-2xl shadow-slate-200 hover:bg-slate-800 transition-all hover:-translate-y-1 active:scale-95 group"
                         >
                             Commencer l'aventure
@@ -94,7 +95,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
                             </span>
                         </button>
                         <button
-                            onClick={onEnter}
+                            onClick={onSignup}
                             className="w-full sm:w-auto bg-white/50 backdrop-blur-md border border-slate-200 px-10 py-5 rounded-3xl text-lg font-bold text-slate-900 hover:bg-white transition-all active:scale-95"
                         >
                             Découvrir les créations

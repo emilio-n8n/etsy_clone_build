@@ -6,8 +6,13 @@ import { Marketplace } from './components/Marketplace';
 import { ProductForm } from './components/ProductForm';
 import { Profile } from './components/Profile';
 import { LandingPage } from './components/LandingPage';
+import { LoginPage } from './components/auth/LoginPage';
+import { SignupPage } from './components/auth/SignupPage';
+
+type View = 'landing' | 'login' | 'signup' | 'dashboard';
 
 export function App() {
+  const [view, setView] = useState<View>('landing');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('feed');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -20,8 +25,43 @@ export function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (!isAuthenticated) {
-    return <LandingPage onEnter={() => setIsAuthenticated(true)} />;
+  // Sync isAuthenticated with view
+  useEffect(() => {
+    if (isAuthenticated) {
+      setView('dashboard');
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleSignup = () => {
+    setIsAuthenticated(true);
+  };
+
+  if (view === 'landing') {
+    return <LandingPage onLogin={() => setView('login')} onSignup={() => setView('signup')} />;
+  }
+
+  if (view === 'login') {
+    return (
+      <LoginPage
+        onLogin={handleLogin}
+        onBack={() => setView('landing')}
+        onSwitchToSignup={() => setView('signup')}
+      />
+    );
+  }
+
+  if (view === 'signup') {
+    return (
+      <SignupPage
+        onSignup={handleSignup}
+        onBack={() => setView('landing')}
+        onSwitchToLogin={() => setView('login')}
+      />
+    );
   }
 
   const renderContent = () => {
