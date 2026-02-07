@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 import { HeartIcon, SearchIcon } from './ui/Icons';
 
 interface ProductCardProps {
@@ -37,56 +38,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ title, price, image, creator,
 );
 
 export const Marketplace: React.FC = () => {
-    const products = [
-        {
-            id: "1",
-            title: "Vase Océan Brute",
-            price: 45,
-            image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&q=80&w=800",
-            creator: "Marc Touffet",
-            category: "Céramique"
-        },
-        {
-            id: "2",
-            title: "Étole Soie Indigo",
-            price: 75,
-            image: "https://images.unsplash.com/photo-1524331153400-f99066461993?auto=format&fit=crop&q=80&w=800",
-            creator: "Sophie Bernard",
-            category: "Textile"
-        },
-        {
-            id: "3",
-            title: "Lampe Bulle",
-            price: 120,
-            image: "https://images.unsplash.com/photo-1534073828943-f801091bb18c?auto=format&fit=crop&q=80&w=800",
-            creator: "Lumi Art",
-            category: "Design"
-        },
-        {
-            id: "4",
-            title: "Carnet Cuir Gravé",
-            price: 35,
-            image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&q=80&w=800",
-            creator: "Atelier Papyrus",
-            category: "Papeterie"
-        },
-        {
-            id: "5",
-            title: "Bague Argent & Jade",
-            price: 95,
-            image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800",
-            creator: "Maison Jade",
-            category: "Bijoux"
-        },
-        {
-            id: "6",
-            title: "Panier Osier Tressé",
-            price: 55,
-            image: "https://images.unsplash.com/photo-1544131495-998816f564ce?auto=format&fit=crop&q=80&w=800",
-            creator: "Brins de Nature",
-            category: "Déco"
-        }
-    ];
+    const [products, setProducts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const data = await supabase.from('products').select('*');
+                setProducts(data || []);
+            } catch (err) {
+                console.error("Error fetching products:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
 
     return (
         <div className="max-w-6xl mx-auto py-6 px-4 pb-24 md:pb-6">
@@ -109,9 +76,15 @@ export const Marketplace: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {products.map(product => (
-                    <ProductCard key={product.id} {...product} />
-                ))}
+                {loading ? (
+                    <div className="col-span-full py-20 text-center text-slate-400">Chargement des créations...</div>
+                ) : products.length > 0 ? (
+                    products.map((product) => (
+                        <ProductCard key={product.id} {...product} />
+                    ))
+                ) : (
+                    <div className="col-span-full py-20 text-center text-slate-400">Aucune création disponible pour le moment.</div>
+                )}
             </div>
         </div>
     );

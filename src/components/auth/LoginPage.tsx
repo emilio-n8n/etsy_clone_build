@@ -1,4 +1,5 @@
 import React from "react";
+import { supabase } from "../../lib/supabase";
 
 interface LoginPageProps {
     onLogin: () => void;
@@ -7,6 +8,27 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onBack, onSwitchToSignup }) => {
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState<string | null>(null);
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        const formData = new FormData(e.currentTarget);
+        const email = formData.get("email") as string;
+        const password = formData.get("password") as string;
+
+        try {
+            await supabase.auth.signIn(email, password);
+            onLogin();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#FDFCFB] flex flex-col justify-center py-12 px-6 lg:px-8 animate-in">
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -32,7 +54,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onBack, onSwitchT
 
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="bg-white py-10 px-8 shadow-2xl shadow-slate-200 border border-slate-100 rounded-[32px]">
-                    <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); onLogin(); }}>
+                    {error && (
+                        <div className="mb-6 p-4 rounded-2xl bg-red-50 text-red-600 text-sm font-medium border border-red-100">
+                            {error}
+                        </div>
+                    )}
+                    <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
                             <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
                                 Adresse e-mail
@@ -90,9 +117,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onBack, onSwitchT
                         <div>
                             <button
                                 type="submit"
-                                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-full shadow-xl shadow-slate-100 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all hover:-translate-y-0.5 active:scale-95"
+                                disabled={loading}
+                                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-full shadow-xl shadow-slate-100 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Se connecter
+                                {loading ? "Connexion..." : "Se connecter"}
                             </button>
                         </div>
                     </form>

@@ -1,3 +1,5 @@
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 import { HeartIcon, MessageIcon, ShareIcon } from './ui/Icons';
 
 interface PostProps {
@@ -57,34 +59,22 @@ const Post: React.FC<PostProps> = ({ creator, content, image, likes, comments, t
 );
 
 export const CommunityFeed: React.FC = () => {
-    const posts = [
-        {
-            id: "1",
-            creator: {
-                name: "Marc Touffet",
-                username: "marcrt",
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marc"
-            },
-            content: "Aujourd'hui, je travaille sur une nouvelle série de céramiques inspirées des côtes bretonnes. La texture de l'argile brute rappelle les rochers sculptés par l'océan. ✨\n\nQu'en pensez-vous ? #ceramique #artisanat #creation",
-            image: "https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&q=80&w=1000",
-            likes: 124,
-            comments: 12,
-            time: "2h"
-        },
-        {
-            id: "2",
-            creator: {
-                name: "Sophie Bernard",
-                username: "sophie_art",
-                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie"
-            },
-            content: "Nouveaux coloris pour les étoles en soie ! J'utilise des pigments naturels pour un rendu vibrant et durable. 🌿",
-            image: "https://images.unsplash.com/photo-1524331153400-f99066461993?auto=format&fit=crop&q=80&w=1000",
-            likes: 89,
-            comments: 5,
-            time: "5h"
-        }
-    ];
+    const [posts, setPosts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                const data = await supabase.from('posts').select('*');
+                setPosts(data || []);
+            } catch (err) {
+                console.error("Error fetching posts:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPosts();
+    }, []);
 
     return (
         <div className="max-w-2xl mx-auto py-6 px-4 md:px-0 pb-24 md:pb-6">
@@ -94,9 +84,15 @@ export const CommunityFeed: React.FC = () => {
             </div>
 
             <div className="space-y-4 md:space-y-0">
-                {posts.map(post => (
-                    <Post key={post.id} {...post} />
-                ))}
+                {loading ? (
+                    <div className="py-20 text-center text-slate-400">Chargement du fil d'actualité...</div>
+                ) : posts.length > 0 ? (
+                    posts.map((post) => (
+                        <Post key={post.id} {...post} />
+                    ))
+                ) : (
+                    <div className="py-20 text-center text-slate-400">Aucun post pour le moment.</div>
+                )}
             </div>
         </div>
     );
