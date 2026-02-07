@@ -68,6 +68,13 @@ export const supabase = {
                 localStorage.removeItem('supabase_token');
                 return null;
             }
+        },
+
+        async updateUser(metadata: any) {
+            return await supabaseFetch('/auth/v1/user', {
+                method: 'PUT',
+                body: JSON.stringify({ data: metadata }),
+            });
         }
     },
 
