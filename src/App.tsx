@@ -8,6 +8,7 @@ import { Profile } from './components/Profile';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/auth/LoginPage';
 import { SignupPage } from './components/auth/SignupPage';
+import { CreatePostModal } from './components/CreatePostModal';
 import { supabase } from './lib/supabase';
 
 type View = 'landing' | 'login' | 'signup' | 'dashboard';
@@ -16,6 +17,8 @@ export function App() {
   const [view, setView] = useState<View>('landing');
   const [activeTab, setActiveTab] = useState('feed');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [postRefreshKey, setPostRefreshKey] = useState(0);
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -76,7 +79,7 @@ export function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'feed':
-        return <CommunityFeed />;
+        return <CommunityFeed key={postRefreshKey} />;
       case 'discover':
         return <Marketplace />;
       case 'sell':
@@ -98,7 +101,7 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#FDFCFB] text-slate-900 font-sans selection:bg-slate-900 selection:text-white">
       {/* Desktop Layout Header */}
-      <DesktopNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <DesktopNavigation activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
 
       {/* Mobile Header (Sticky) */}
       <header className={`md:hidden sticky top-0 z-40 px-6 py-4 transition-all duration-300 ${isScrolled ? 'bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm' : 'bg-transparent'
@@ -126,6 +129,23 @@ export function App() {
 
       {/* Mobile Bottom Navigation */}
       <BottomNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+
+      {/* Global Floating Action Button for Posting */}
+      <button
+        onClick={() => setIsPostModalOpen(true)}
+        className="fixed bottom-24 right-6 z-40 h-14 w-14 rounded-2xl bg-slate-900 text-white shadow-2xl shadow-slate-400 flex items-center justify-center hover:scale-110 active:scale-95 transition-all md:bottom-12 md:right-12"
+      >
+        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+
+      {/* Create Post Modal */}
+      <CreatePostModal
+        isOpen={isPostModalOpen}
+        onClose={() => setIsPostModalOpen(false)}
+        onSuccess={() => setPostRefreshKey(k => k + 1)}
+      />
 
       {/* Footer for Desktop */}
       <footer className="hidden md:block py-12 border-t border-slate-100 bg-white">

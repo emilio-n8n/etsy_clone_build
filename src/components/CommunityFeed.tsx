@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { HeartIcon, MessageIcon, ShareIcon, PlusIcon } from './ui/Icons';
+import { HeartIcon, MessageIcon, ShareIcon } from './ui/Icons';
 
 interface PostProps {
     id: string;
@@ -95,10 +95,6 @@ const Post: React.FC<PostProps> = ({ id, creator, content, image, likes, comment
 export const CommunityFeed: React.FC = () => {
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [newPostContent, setNewPostContent] = useState('');
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [isPosting, setIsPosting] = useState(false);
 
     const fetchPosts = async () => {
         try {
@@ -119,58 +115,7 @@ export const CommunityFeed: React.FC = () => {
         fetchPosts();
     }, []);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
-        }
-    };
-
-    const handlePost = async () => {
-        if (!newPostContent.trim() && !selectedFile) return;
-
-        setIsPosting(true);
-        try {
-            const userResponse = await supabase.auth.getUser();
-            if (!userResponse) throw new Error("Vous devez être connecté.");
-
-            let imageUrl = null;
-            if (selectedFile) {
-                const fileName = `${Date.now()}-${selectedFile.name}`;
-                await supabase.storage.from('post-images').upload(fileName, selectedFile);
-                imageUrl = supabase.storage.from('post-images').getPublicUrl(fileName).data.publicUrl;
-            }
-
-            const newPost = {
-                content: newPostContent,
-                image: imageUrl,
-                creator: {
-                    name: userResponse.user_metadata?.full_name || userResponse.email?.split('@')[0],
-                    username: userResponse.user_metadata?.username || userResponse.email?.split('@')[0],
-                    avatar: userResponse.user_metadata?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userResponse.email}`,
-                },
-                likes: 0,
-                comments: 0,
-                time: "À l'instant",
-            };
-
-            await supabase.from('posts').insert(newPost);
-
-            // Cleanup and Refresh
-            setNewPostContent('');
-            setSelectedFile(null);
-            setPreviewUrl(null);
-            await fetchPosts();
-        } catch (err: any) {
-            alert(err.message);
-        } finally {
-            setIsPosting(false);
-        }
-    };
-
     const handleLike = async (postId: string) => {
-        // Simple update: fetch current post, increment likes, then update
         try {
             const { data } = await supabase.from('posts').select('*');
             const post = data?.find((p: any) => p.id === postId);
@@ -187,48 +132,6 @@ export const CommunityFeed: React.FC = () => {
             <div className="mb-8 hidden md:block">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900">Fil d'actualité</h1>
                 <p className="text-sm text-slate-500">Partagez votre processus et vos inspirations.</p>
-            </div>
-
-            {/* Create Post Section */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 mb-8">
-                <div className="flex gap-4">
-                    <textarea
-                        value={newPostContent}
-                        onChange={(e) => setNewPostContent(e.target.value)}
-                        placeholder="Quoi de neuf dans votre atelier ?"
-                        className="flex-1 bg-slate-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-slate-900/10 outline-none resize-none min-h-[100px] transition-all"
-                    />
-                </div>
-
-                {previewUrl && (
-                    <div className="mt-4 relative rounded-2xl overflow-hidden aspect-video border border-slate-100">
-                        <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
-                        <button
-                            onClick={() => { setSelectedFile(null); setPreviewUrl(null); }}
-                            className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/50 text-white backdrop-blur-sm hover:bg-slate-900 transition-colors"
-                        >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                )}
-
-                <div className="flex items-center justify-between mt-4">
-                    <label className="flex items-center gap-2 text-slate-400 hover:text-slate-600 cursor-pointer transition-all">
-                        <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                        <PlusIcon className="w-5 h-5" />
-                        <span className="text-xs font-bold uppercase tracking-widest">Ajouter une photo</span>
-                    </label>
-
-                    <button
-                        onClick={handlePost}
-                        disabled={isPosting || (!newPostContent.trim() && !selectedFile)}
-                        className="bg-slate-900 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all disabled:opacity-50 active:scale-95"
-                    >
-                        {isPosting ? "Publication..." : "Publier"}
-                    </button>
-                </div>
             </div>
 
             <div className="space-y-4 md:space-y-0">

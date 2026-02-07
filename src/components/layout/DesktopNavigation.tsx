@@ -4,9 +4,10 @@ import { HomeIcon, SearchIcon, PlusIcon, BellIcon, UserIcon } from '../ui/Icons'
 interface DesktopNavigationProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
+    onLogout: () => void;
 }
 
-export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({ activeTab, setActiveTab }) => {
+export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({ activeTab, setActiveTab, onLogout }) => {
     const tabs = [
         { id: 'feed', icon: HomeIcon, label: 'Feed' },
         { id: 'discover', icon: SearchIcon, label: 'Découvrir' },
@@ -31,8 +32,8 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({ activeTab,
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${activeTab === tab.id
-                                    ? 'bg-slate-100 text-slate-900 font-semibold'
-                                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                                ? 'bg-slate-100 text-slate-900 font-semibold'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
                                 }`}
                         >
                             <tab.icon className="w-5 h-5" />
@@ -41,8 +42,11 @@ export const DesktopNavigation: React.FC<DesktopNavigationProps> = ({ activeTab,
                     ))}
                 </nav>
 
-                <button className="rounded-full bg-slate-900 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-slate-200 transition hover:-translate-y-0.5 hover:bg-slate-800 active:scale-95">
-                    Connexion
+                <button
+                    onClick={onLogout}
+                    className="rounded-full border border-slate-200 px-6 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition hover:-translate-y-0.5 active:scale-95"
+                >
+                    Déconnexion
                 </button>
             </div>
         </header>
